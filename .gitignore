@@ -1,4 +1,8 @@
+/venv/
+.gitignore
 credentials-gmail.json
 credentials.json
 token-gmail.json
 vision_credentials.json
+config.py
+/venv/
