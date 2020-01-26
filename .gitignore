@@ -6,3 +6,4 @@ token-gmail.json
 vision_credentials.json
 config.py
 /venv/
+!/.gitignore

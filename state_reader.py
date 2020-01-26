@@ -17,17 +17,17 @@ import config
 
 def is_crypto(_filename):
 	pdf = wi(filename=_filename, resolution=140)
-	pdfImage = pdf.convert('jpeg')
+	pdf_image = pdf.convert('jpeg')
 
-	imageBlobs = []
+	image_blobs = []
 
-	for img in pdfImage.sequence:
-		imgPage = wi(image=img)
-		imageBlobs.append(imgPage.make_blob('jpeg'))
+	for img in pdf_image.sequence:
+		img_page = wi(image=img)
+		image_blobs.append(img_page.make_blob('jpeg'))
 
 	recognized_text = []
 
-	for imgBlob in imageBlobs:
+	for imgBlob in image_blobs:
 		im = Image.open(io.BytesIO(imgBlob))
 		text = pytesseract.image_to_string(im, lang='eng')
 		recognized_text.append(text)
@@ -168,19 +168,19 @@ def run():
 	ezgmail.init()
 	print(ezgmail.EMAIL_ADDRESS)
 
-	print("Searching for ig statement attachments in 2019, unread ")
-	threads = ezgmail.search("2019 from:'statements@ig.com' label:unread has:attachment", maxResults=max_emails)
+	print("Searching for ig statement attachments in 2020, unread ")
+	email_threads = ezgmail.search("2020 from:'statements@ig.com' label:unread has:attachment", maxResults=max_emails)
 
 	# threads = ezgmail.search("2011 from:'statements@igindex.co.uk' has:attachment", maxResults=MAX_RESULTS)
 
-	print(threads)
-	print(len(threads))
+	print(email_threads)
+	print(len(email_threads))
 
 	print("iterating through all the threads")
 	count = 1
-	for thread in threads:
+	for thread in email_threads:
 
-		print("thread", count, ":", thread)
+		print("email thread", count, ":", thread)
 		file = thread.messages
 		for item in file:
 			file = item.attachments
@@ -201,7 +201,7 @@ def run():
 
 	move(movdir=config.SETTINGS['local_statements'], basedir=base_dir)
 
-	ezgmail.markAsRead(threads)
+	ezgmail.markAsRead(email_threads)
 
 	# Classify the files in dropbox and move them across
 	ocr_classification()
