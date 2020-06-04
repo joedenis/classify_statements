@@ -33,10 +33,11 @@ def is_crypto(_filename):
 		recognized_text.append(text)
 
 	keyword = "crypto"
+	keyword_second = "second"
 
 	for i in recognized_text:
 		# print(i)
-		if keyword in i:
+		if keyword in i or keyword_second in i:
 			print("CRYPTO STATEMENT!!!")
 			return True
 
@@ -169,7 +170,7 @@ def run():
 	print(ezgmail.EMAIL_ADDRESS)
 
 	print("Searching for ig statement attachments in 2020, unread ")
-	email_threads = ezgmail.search("2020 from:'statements@ig.com' label:unread has:attachment", maxResults=max_emails)
+	email_threads = ezgmail.search("2020 from:'no-reply.statements@ig.com' label:unread has:attachment", maxResults=max_emails)
 
 	# threads = ezgmail.search("2011 from:'statements@igindex.co.uk' has:attachment", maxResults=MAX_RESULTS)
 
