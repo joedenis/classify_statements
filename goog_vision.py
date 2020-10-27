@@ -9,11 +9,11 @@ import config
 import ezgmail
 
 # setting the payment details for our vision and storage account!
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] ="/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
 
 
 def implicit():
-    '''Used to test if cloud is set up correctly'''
+    """Used to test if cloud is set up correctly"""
     # If you don't specify credentials when constructing the client, the
     # client library will look for credentials in the environment.
     storage_client = storage.Client()
@@ -310,7 +310,7 @@ def copy_local_directory_to_gcs(local_path, bucket_name, gcs_path):
     for local_file in glob.glob(local_path + '/**'):
         if not os.path.isfile(local_file):
             continue
-        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path) :])
+        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
         blob = bucket.blob(remote_path)
         blob.upload_from_filename(local_file)
 
@@ -324,8 +324,6 @@ def main():
     """
 
     attachment_downloads()
-
-
 
     # SOURCE = "gs://praescire_statements/statement_crypto.pdf"
     SOURCE = "gs://praescire_statements/"
