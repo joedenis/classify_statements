@@ -11,7 +11,7 @@ import ezgmail
 # setting the payment details for our vision and storage account!
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
 
-# Toggle to False to run in the normal folders
+# todo Toggle to False to run in the normal folders
 beta = True
 
 def implicit():
