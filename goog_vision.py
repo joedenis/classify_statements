@@ -317,10 +317,11 @@ def copy_local_directory_to_gcs(local_path, bucket_name, gcs_path):
 
 def main():
     """
+    Downloads pdf attachments from gmail
     Moves all of the pdf statements stored in 'pdf_statements' into either crypto or praescire_statement folders
     Works via classification in the cloud.
     3 pages per statement.
-    :return:
+    Then moves all statements from Google Cloud into Dropbox so we can view the files locally
     """
 
     attachment_downloads()
