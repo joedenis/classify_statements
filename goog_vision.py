@@ -118,9 +118,9 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
 
     # List objects with the given prefix.
     blob_list = list(bucket.list_blobs(prefix=prefix))
-    print('Output files:')
-    for blob in blob_list:
-        print(blob.name)
+    # print('Output files:')
+    # for blob in blob_list:
+    #     print(blob.name)
 
     # Process the first output file from GCS.
     # Since we specified batch_size=2, the first response contains
@@ -139,15 +139,39 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
     # The response contains more information:
     # annotation/pages/blocks/paragraphs/words/symbols
     # including confidence scores and bounding boxes
-    print(u'Full text:\n{}'.format(
-        annotation.text))
+    # print(u'Full text:\n{}'.format(annotation.text))
 
-    if "Joseph" in annotation.text:
-        print("WE FOUND Joseph")
-    if "crypto" in annotation.text:
+    if "Account Name crypto" in annotation.text:
         print("CRYPTO STATEMEMT")
     else:
         print("PRAESCIRE STATEMENT")
+
+
+def list_blobs(bucket_name, _prefix=None):
+    """returns list of strings of all the blobs in the bucket that contain .pdf"""
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+
+    blobs = bucket.list_blobs(prefix=_prefix)
+
+    blob_pdf_strings = []
+    for blob in blobs:
+        if '.pdf' in blob.name:
+            # print(blob.name)
+            blob_pdf_strings.append(blob.name)
+
+    return blob_pdf_strings
+
+
+def file_type_blobs(blobs, type):
+    list = []
+    for blob in blobs:
+        if type in blob.name:
+            list.append(blob)
+
+    print(list)
+    return list
+
 
 
 def main():
@@ -160,7 +184,26 @@ def main():
 
     GCS_CRYPTO_URI = 'gs://{}/{}/'.format(BUCKET, CRYPTO_PREFIX)
 
-    async_detect_document(SOURCE, GCS_DESTINATION_URI)
+    # async_detect_document(SOURCE, GCS_DESTINATION_URI)
+
+    """
+    Here we are getting all the pdfs in the statements folder and then running ocr
+    """
+    storage_client = storage.Client()
+    buckets = list(storage_client.list_buckets())
+    print(buckets)
+
+    pdf_blobs_str = list_blobs(BUCKET, _prefix='pdf_statements/')
+
+    print(pdf_blobs_str)
+    SOURCE ="gs://praescire_statements/"
+    for statement_path in pdf_blobs_str:
+        path_to_pdf = SOURCE + statement_path
+        print(path_to_pdf)
+
+    #     do the clasification on the blob_path
+        async_detect_document(path_to_pdf, GCS_DESTINATION_URI)
+    # todo what do we want to do when we get the classification of statements
 
 
 
@@ -170,3 +213,6 @@ if __name__ == "__main__":
     main()
 
     print("time elapsed: {:.2f}s".format(time.time() - start_time))
+
+
+# todo
