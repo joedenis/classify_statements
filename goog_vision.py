@@ -11,6 +11,8 @@ import ezgmail
 # setting the payment details for our vision and storage account!
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
 
+# Toggle to False to run in the normal folders
+beta = True
 
 def implicit():
     """Used to test if cloud is set up correctly"""
@@ -375,7 +377,11 @@ def main():
     move_and_delete(BUCKET, crypto_blob_str, crypto_store)
 
     praescire_blob_str = list_blobs(BUCKET, _prefix='praescire_statements/')
-    statements_store = config.SETTINGS['statements_path'] + 'google_vision/'
+
+    if beta == True:
+        statements_store = config.SETTINGS['statements_path'] + 'google_vision/'
+    else:
+        statements_store = config.SETTINGS['statements_path']
     move_and_delete(BUCKET, praescire_blob_str, statements_store)
 
     # performing monthly folders in dropbox for the praescire_statements
