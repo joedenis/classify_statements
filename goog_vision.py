@@ -179,6 +179,12 @@ def list_blobs(bucket_name, _prefix=None):
 
 
 def file_type_blobs(blobs, extension):
+    """
+
+    :param blobs:
+    :param extension:
+    :return: list of file paths from the blobs with a given extension (.pdf for example)
+    """
     out = []
     for blob in blobs:
         if extension in blob.name:
@@ -189,7 +195,13 @@ def file_type_blobs(blobs, extension):
 
 
 def move_and_delete(bucket_name, blob_list, destination):
-
+    """
+    downloads all the files in a blob to a destination
+    :param bucket_name:
+    :param blob_list:
+    :param destination: dropbox we use
+    :return:
+    """
     for path in blob_list:
         file_name = os.path.basename(path)
         destination_path = destination + file_name
@@ -265,6 +277,10 @@ def move(movdir=config.SETTINGS['local_tmp'], basedir=config.SETTINGS['local_sta
 
 
 def attachment_downloads():
+    """
+    downloads our gmail attachments into a local directory
+    :return:
+    """
     max_emails = 100
     ezgmail.init()
     print(ezgmail.EMAIL_ADDRESS)
