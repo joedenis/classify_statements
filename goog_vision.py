@@ -378,10 +378,11 @@ def main():
 
     praescire_blob_str = list_blobs(BUCKET, _prefix='praescire_statements/')
 
-    if beta == True:
+    if beta:
         statements_store = config.SETTINGS['statements_path'] + 'google_vision/'
     else:
         statements_store = config.SETTINGS['statements_path']
+
     move_and_delete(BUCKET, praescire_blob_str, statements_store)
 
     # performing monthly folders in dropbox for the praescire_statements
