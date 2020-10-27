@@ -1,10 +1,13 @@
 import os
+from os.path import isfile, join
 import re
+import shutil
 import time
 from google.cloud import storage
+import config
 
 # setting the payment details for our vision and storage account!
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] ="/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
 
 
 def implicit():
@@ -16,6 +19,7 @@ def implicit():
     # Make an authenticated API request
     buckets = list(storage_client.list_buckets())
     print(buckets)
+
 
 def upload_blob(bucket_name, source_file_name, destination_blob_name):
     """Uploads a file to the bucket."""
@@ -29,6 +33,7 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
         source_file_name,
         destination_blob_name))
 
+
 def download_blob(bucket_name, source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
     storage_client = storage.Client()
@@ -40,6 +45,7 @@ def download_blob(bucket_name, source_blob_name, destination_file_name):
     print('Blob {} downloaded to {}.'.format(
         source_blob_name,
         destination_file_name))
+
 
 def copy_blob(bucket_name, blob_name, new_bucket_name, new_blob_name):
     """Copies a blob from one bucket to another with a new name.
@@ -73,7 +79,9 @@ def delete_blob(bucket_name, blob_name):
 
 
 def async_detect_document(gcs_source_uri, gcs_destination_uri):
-    """OCR with PDF/TIFF as source files on GCS"""
+    """OCR with PDF/TIFF as source files on GCS
+    returns True False (is crypto statement)
+    """
     from google.cloud import vision
     from google.cloud import storage
     from google.protobuf import json_format
@@ -143,8 +151,11 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
 
     if "Account Name crypto" in annotation.text:
         print("CRYPTO STATEMEMT")
+        return True
     else:
         print("PRAESCIRE STATEMENT")
+
+    return False
 
 
 def list_blobs(bucket_name, _prefix=None):
@@ -163,27 +174,70 @@ def list_blobs(bucket_name, _prefix=None):
     return blob_pdf_strings
 
 
-def file_type_blobs(blobs, type):
-    list = []
+def file_type_blobs(blobs, extension):
+    out = []
     for blob in blobs:
-        if type in blob.name:
-            list.append(blob)
+        if extension in blob.name:
+            out.append(blob)
 
-    print(list)
-    return list
+    print(out)
+    return out
 
+
+def move_and_delete(bucket_name, blob_list, destination):
+
+    for path in blob_list:
+        file_name = os.path.basename(path)
+        destination_path = destination + file_name
+        download_blob(bucket_name, path, destination_path)
+        delete_blob(bucket_name, path)
+
+
+def mov_into_monthly(statements_path):
+    """
+	have filenames containing months:
+	Jan Feb Mar Apr May Jun Jul Aug Sep Nov Dec
+	if file name contains monthly name move to the appropriate folder
+	"""
+    onlyfiles = [f for f in os.listdir(statements_path) if isfile(join(statements_path, f))]
+    print(onlyfiles)
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    for file in onlyfiles:
+        old_file_path = os.path.join(statements_path, file)
+        for month in months:
+            if month in file:
+                monthly_checker(month, statements_path, old_file_path)
+                break
+
+
+def monthly_checker(month, statements_path, old_file_path):
+    print("Moving to", month, "folder")
+    path = os.path.join(statements_path, month)
+    filename = os.path.basename(old_file_path)
+
+    if not os.path.exists(path):
+        print("Folder does not exist so creating")
+        os.mkdir(path)
+        shutil.move(old_file_path, path)
+    else:
+        # folder exists so just sopy it over
+        print(filename, "Value of file checking", os.path.isfile(os.path.join(path, filename)))
+        if not os.path.isfile(os.path.join(path, filename)):
+            new_file_name = os.path.join(path, filename)
+            shutil.move(old_file_path, new_file_name)
+        else:
+            print("no moving, filename already exists")
 
 
 def main():
-    SOURCE = "gs://praescire_statements/statement_crypto.pdf"
+    # SOURCE = "gs://praescire_statements/statement_crypto.pdf"
+    SOURCE = "gs://praescire_statements/"
     BUCKET = "praescire_statements"
     OUTPUT_PREFIX = 'OCR_PDF_TEST_OUTPUT'
-    CRYPTO_PREFIX = 'crypto'
 
     GCS_DESTINATION_URI = 'gs://{}/{}/'.format(BUCKET, OUTPUT_PREFIX)
 
-    GCS_CRYPTO_URI = 'gs://{}/{}/'.format(BUCKET, CRYPTO_PREFIX)
-
+    # GCS_CRYPTO_URI = 'gs://{}/{}/'.format(BUCKET, CRYPTO_PREFIX)
     # async_detect_document(SOURCE, GCS_DESTINATION_URI)
 
     """
@@ -196,15 +250,33 @@ def main():
     pdf_blobs_str = list_blobs(BUCKET, _prefix='pdf_statements/')
 
     print(pdf_blobs_str)
-    SOURCE ="gs://praescire_statements/"
+
     for statement_path in pdf_blobs_str:
         path_to_pdf = SOURCE + statement_path
         print(path_to_pdf)
 
     #     do the clasification on the blob_path
-        async_detect_document(path_to_pdf, GCS_DESTINATION_URI)
-    # todo what do we want to do when we get the classification of statements
+        is_crypto = async_detect_document(path_to_pdf, GCS_DESTINATION_URI)
+        if is_crypto:
+            # replace the path_to_pdf in the string to move folders easily
+            new_path = statement_path.replace("pdf_statements/", "crypto/")
+        else:
+            new_path = statement_path.replace("pdf_statements/", "praescire_statements/")
+        # copy the newl classified statement to the praescire_statement folder
+        copy_blob(BUCKET, statement_path, BUCKET, new_blob_name=new_path)
+        delete_blob(BUCKET, statement_path)
 
+    # moving the files from google cloud to dropbox
+    crypto_blob_str = list_blobs(BUCKET, _prefix='crypto/')
+    crypto_store = config.SETTINGS['crypto_store']
+    move_and_delete(BUCKET, crypto_blob_str, crypto_store)
+
+    praescire_blob_str = list_blobs(BUCKET, _prefix='praescire_statements/')
+    statements_store = config.SETTINGS['statements_path'] + 'google_vision/'
+    move_and_delete(BUCKET, praescire_blob_str, statements_store)
+
+    # performing monthly folders in dropbox for the praescire_statements
+    mov_into_monthly(statements_store)
 
 
 if __name__ == "__main__":
@@ -213,6 +285,3 @@ if __name__ == "__main__":
     main()
 
     print("time elapsed: {:.2f}s".format(time.time() - start_time))
-
-
-# todo
