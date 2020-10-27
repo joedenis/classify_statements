@@ -1,3 +1,4 @@
+import glob
 import os
 from os.path import isfile, join
 import re
@@ -5,6 +6,7 @@ import shutil
 import time
 from google.cloud import storage
 import config
+import ezgmail
 
 # setting the payment details for our vision and storage account!
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] ="/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
@@ -229,6 +231,90 @@ def monthly_checker(month, statements_path, old_file_path):
             print("no moving, filename already exists")
 
 
+def move(movdir=config.SETTINGS['local_tmp'], basedir=config.SETTINGS['local_statements']):
+    # Walk through all files in the directory that contains the files to copy
+    for root, dirs, files in os.walk(movdir):
+        for filename in files:
+            # I use absolute path, case you want to move several dirs.
+            old_name = os.path.join(os.path.abspath(root), filename)
+
+            # Separate base from extension
+            base, extension = os.path.splitext(filename)
+
+            # Initial new name
+            new_name = os.path.join(basedir, filename)
+            # If folder basedir/base does not exist... You don't want to create it?
+            # if not os.path.exists(os.path.join(basedir, base)):
+            if not os.path.exists(basedir):
+                print(os.path.join(basedir, base), "not found")
+                continue  # Next filename
+            elif not os.path.exists(new_name):  # folder exists, file does not
+                # shutil.copy(old_name, new_name)
+                shutil.move(old_name, new_name)
+            else:  # folder exists, file exists as well
+                ii = 1
+                while True:
+                    new_name = os.path.join(basedir, base + "_" + str(ii) + extension)
+                    if not os.path.exists(new_name):
+                        shutil.move(old_name, new_name)
+                        print("Copied", old_name, "as", new_name)
+                        break
+                    ii += 1
+
+
+def attachment_downloads():
+    max_emails = 100
+    ezgmail.init()
+    print(ezgmail.EMAIL_ADDRESS)
+
+    print("Searching for ig statement attachments in 2020, unread ")
+    email_threads = ezgmail.search("2020 from:'no-reply.statements@ig.com' label:unread has:attachment",
+                                   maxResults=max_emails)
+
+    # threads = ezgmail.search("2011 from:'statements@igindex.co.uk' has:attachment", maxResults=MAX_RESULTS)
+
+    print(email_threads)
+    print(len(email_threads))
+
+    print("iterating through all the threads")
+    count = 1
+    for thread in email_threads:
+
+        print("email thread", count, ":", thread)
+        file = thread.messages
+        for item in file:
+            file = item.attachments
+            # attachment_name = pprint.pprint(file)
+            print("printing how the attachment reads", file)
+
+            filename = file[0]
+
+            item.downloadAttachment(filename, config.SETTINGS['local_tmp'], duplicateIndex=0)
+            # MOVE ITEM INTO statements_folder
+            move()
+
+        count += 1
+
+    ezgmail.markAsRead(email_threads)
+
+
+def copy_local_directory_to_gcs(local_path, bucket_name, gcs_path):
+    """Recursively copy a directory of files to GCS.
+
+    local_path should be a directory and not have a trailing slash.
+    """
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucket_name)
+
+    assert os.path.isdir(local_path)
+    for local_file in glob.glob(local_path + '/**'):
+        if not os.path.isfile(local_file):
+            continue
+        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path) :])
+        blob = bucket.blob(remote_path)
+        blob.upload_from_filename(local_file)
+
+
 def main():
     """
     Moves all of the pdf statements stored in 'pdf_statements' into either crypto or praescire_statement folders
@@ -236,7 +322,10 @@ def main():
     3 pages per statement.
     :return:
     """
-    # todo create a function that downloads the statements into google cloud storage.
+
+    attachment_downloads()
+
+
 
     # SOURCE = "gs://praescire_statements/statement_crypto.pdf"
     SOURCE = "gs://praescire_statements/"
@@ -247,6 +336,13 @@ def main():
 
     # GCS_CRYPTO_URI = 'gs://{}/{}/'.format(BUCKET, CRYPTO_PREFIX)
     # async_detect_document(SOURCE, GCS_DESTINATION_URI)
+
+    copy_local_directory_to_gcs(config.SETTINGS['local_statements'], BUCKET, 'pdf_statements/')
+
+    # delete the local files as they are now in the cloud
+    filelist = glob.glob(os.path.join(config.SETTINGS['local_statements'], "*.pdf"))
+    for f in filelist:
+        os.remove(f)
 
     """
     Here we are getting all the pdfs in the statements folder and then running ocr
