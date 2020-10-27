@@ -230,6 +230,14 @@ def monthly_checker(month, statements_path, old_file_path):
 
 
 def main():
+    """
+    Moves all of the pdf statements stored in 'pdf_statements' into either crypto or praescire_statement folders
+    Works via classification in the cloud.
+    3 pages per statement.
+    :return:
+    """
+    # todo create a function that downloads the statements into google cloud storage.
+
     # SOURCE = "gs://praescire_statements/statement_crypto.pdf"
     SOURCE = "gs://praescire_statements/"
     BUCKET = "praescire_statements"
