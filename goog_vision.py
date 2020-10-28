@@ -12,7 +12,7 @@ import ezgmail
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
 
 # todo Toggle to False to run in the normal folders
-beta = True
+beta = False
 
 def implicit():
     """Used to test if cloud is set up correctly"""

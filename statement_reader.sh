@@ -3,7 +3,8 @@
 STRING="Launching trades_database .csv downloader..."
 ROOT="/home/joe/PycharmProjects/ezgmail_statements"
 PYTHON="/home/joe/PycharmProjects/ezgmail_statements/venv/bin/python"
-GAME="state_reader.py"
+#GAME="state_reader.py"
+GAME="goog_vision.py"
 
 pushd . > /dev/null 2>&1
 cd $ROOT
