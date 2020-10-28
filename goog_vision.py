@@ -1,3 +1,8 @@
+"""
+Statement download and classification in Google Cloud
+"""
+
+
 import glob
 import os
 from os.path import isfile, join

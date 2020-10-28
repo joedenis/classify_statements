@@ -1,4 +1,8 @@
-import pprint
+"""
+Statement download and with classification local machine using pytesseract
+"""
+
+
 import ezgmail
 
 import io
