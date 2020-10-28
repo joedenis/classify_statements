@@ -11,8 +11,8 @@ import ezgmail
 # setting the payment details for our vision and storage account!
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/joe/PycharmProjects/ezgmail_statements/vision_credentials.json"
 
-# todo Toggle to False to run in the normal folders
-beta = False
+betaVersion = False
+
 
 def implicit():
     """Used to test if cloud is set up correctly"""
@@ -82,7 +82,6 @@ def delete_blob(bucket_name, blob_name):
     print('Blob {} deleted.'.format(blob_name))
 
 
-
 def async_detect_document(gcs_source_uri, gcs_destination_uri):
     """OCR with PDF/TIFF as source files on GCS
     returns True False (is crypto statement)
@@ -90,7 +89,6 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
     import json
     from google.cloud import vision
     from google.cloud import storage
-    from google.protobuf import json_format
     # Supported mime_types are: 'application/pdf' and 'image/tiff'
     mime_type = 'application/pdf'
 
@@ -211,10 +209,10 @@ def move_and_delete(bucket_name, blob_list, destination):
 
 def mov_into_monthly(statements_path):
     """
-	have filenames containing months:
-	Jan Feb Mar Apr May Jun Jul Aug Sep Nov Dec
-	if file name contains monthly name move to the appropriate folder
-	"""
+    have filenames containing months:
+    Jan Feb Mar Apr May Jun Jul Aug Sep Nov Dec
+    if file name contains monthly name move to the appropriate folder
+    """
     onlyfiles = [f for f in os.listdir(statements_path) if isfile(join(statements_path, f))]
     print(onlyfiles)
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -394,7 +392,7 @@ def main():
 
     praescire_blob_str = list_blobs(BUCKET, _prefix='praescire_statements/')
 
-    if beta:
+    if betaVersion:
         statements_store = config.SETTINGS['statements_path'] + 'google_vision/'
     else:
         statements_store = config.SETTINGS['statements_path']
