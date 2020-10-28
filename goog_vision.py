@@ -241,6 +241,9 @@ def monthly_checker(month, statements_path, old_file_path):
             shutil.move(old_file_path, new_file_name)
         else:
             print("no moving, filename already exists")
+            print("deleting from the move location:")
+            os.remove(old_file_path)
+            print(old_file_path, ": DELETED")
 
 
 def move(movdir=config.SETTINGS['local_tmp'], basedir=config.SETTINGS['local_statements']):
