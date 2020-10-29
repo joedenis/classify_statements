@@ -223,10 +223,15 @@ def mov_into_monthly(statements_path):
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     for file in onlyfiles:
         old_file_path = os.path.join(statements_path, file)
-        for month in months:
-            if month in file:
-                monthly_checker(month, statements_path, old_file_path)
-                break
+        if "Share" in file or "ISA" in file:
+            isa_dir = statements_path + "ISAs/"
+            shutil.move(old_file_path, isa_dir)
+            print("Moved", file, "into ISA folder")
+        else:
+            for month in months:
+                if month in file:
+                    monthly_checker(month, statements_path, old_file_path)
+                    break
 
 
 def monthly_checker(month, statements_path, old_file_path):
