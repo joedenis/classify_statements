@@ -225,8 +225,13 @@ def mov_into_monthly(statements_path):
         old_file_path = os.path.join(statements_path, file)
         if "Share" in file or "ISA" in file:
             isa_dir = statements_path + "ISAs/"
-            shutil.move(old_file_path, isa_dir)
-            print("Moved", file, "into ISA folder")
+            if not os.path.isfile(os.path.join(isa_dir, file)):
+                shutil.move(old_file_path, os.path.join(isa_dir, file))
+                print("Moved", file, "into ISA folder")
+            else:
+                print("ALREADY EXISTS:", file)
+                print("deleting: ", old_file_path)
+                os.remove(old_file_path)
         else:
             for month in months:
                 if month in file:
@@ -251,9 +256,8 @@ def monthly_checker(month, statements_path, old_file_path):
             shutil.move(old_file_path, new_file_name)
         else:
             print("no moving, filename already exists")
-            print("deleting from the move location:")
             os.remove(old_file_path)
-            print(old_file_path, ": DELETED")
+            print("Deleted:", old_file_path)
 
 
 def move(movdir=config.SETTINGS['local_tmp'], basedir=config.SETTINGS['local_statements']):
