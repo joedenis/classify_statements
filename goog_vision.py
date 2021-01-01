@@ -300,8 +300,8 @@ def attachment_downloads():
     ezgmail.init()
     print(ezgmail.EMAIL_ADDRESS)
 
-    print("Searching for ig statement attachments in 2020, unread ")
-    email_threads = ezgmail.search("2020 from:'no-reply.statements@ig.com' label:unread has:attachment",
+    print("Searching for ig statement attachments in 2021, unread ")
+    email_threads = ezgmail.search("2021 from:'no-reply.statements@ig.com' label:unread has:attachment",
                                    maxResults=max_emails)
 
     # threads = ezgmail.search("2011 from:'statements@igindex.co.uk' has:attachment", maxResults=MAX_RESULTS)
