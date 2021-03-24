@@ -37,7 +37,7 @@ python-pptx==0.6.5
 pytz==2019.1
 PyYAML==5.3.1
 requests==2.22.0
-rsa==4.0
+rsa==4.1
 six==1.15.0
 SpeechRecognition==3.6.3
 typing-extensions==3.7.4.3
