@@ -156,13 +156,13 @@ def async_detect_document(gcs_source_uri, gcs_destination_uri):
     # including confidence scores and bounding boxes
     # print(u'Full text:\n{}'.format(annotation.text))
 
-    if "Account Name crypto" in annotation['text']:
-        print("CRYPTO STATEMEMT")
-        return True
+    if "Account Name Spread bet" in annotation['text']:
+        print("PRAESCIRE STATEMEMT")
+        return False
     else:
-        print("PRAESCIRE STATEMENT")
+        print("CRYPTO STATEMENT")
 
-    return False
+    return True
 
 
 def list_blobs(bucket_name, _prefix=None):
