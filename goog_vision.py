@@ -238,6 +238,28 @@ def mov_into_monthly(statements_path):
                     monthly_checker(month, statements_path, old_file_path)
                     break
 
+def city_mov_monthly(statements_path):
+    """have filenames containing year month day time
+    2021 11 30 220000
+    2021 11 30 2200000
+    """
+    onlyfiles = [f for f in os.listdir(statements_path) if isfile(join(statements_path, f))]
+    print(onlyfiles)
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    months = { '01': 'Jan', '02': 'Feb', '03':'Mar', '04':'Apr', '05':'May',
+               '06':'Jun', '07':'Jul', '08':'Aug', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dec'}
+
+    for file in onlyfiles:
+        # we only want to move cityIndex files.  They have more than 10 digits in the filename
+        digitsinFile = sum(c.isdigit() for c in file)
+        if digitsinFile > 12:
+
+            old_file_path = os.path.join(statements_path, file)
+
+            month_digit = file[4:6]
+            monthly_checker(months[month_digit], statements_path, old_file_path)
+
 
 def monthly_checker(month, statements_path, old_file_path):
     print("Moving to", month, "folder")
@@ -291,7 +313,7 @@ def move(movdir=config.SETTINGS['local_tmp'], basedir=config.SETTINGS['local_sta
                     ii += 1
 
 
-def attachment_downloads():
+def attachment_downloads(year=2021, tag="from:'no-reply.statements@ig.com' label:unread has:attachment"):
     """
     downloads our gmail attachments into a local directory
     :return:
@@ -300,9 +322,12 @@ def attachment_downloads():
     ezgmail.init()
     print(ezgmail.EMAIL_ADDRESS)
 
-    print("Searching for ig statement attachments in 2021, unread ")
-    email_threads = ezgmail.search("2021 from:'no-reply.statements@ig.com' label:unread has:attachment",
-                                   maxResults=max_emails)
+    print("Searching for ig statement attachments in", str(year),"unread")
+    search_term = str(year) + " " + tag
+    email_threads = ezgmail.search(
+        search_term,
+        maxResults=max_emails
+    )
 
     # threads = ezgmail.search("2011 from:'statements@igindex.co.uk' has:attachment", maxResults=MAX_RESULTS)
 
@@ -419,10 +444,62 @@ def main():
     # performing monthly folders in dropbox for the praescire_statements
     mov_into_monthly(statements_store)
 
+def city_statements():
+    attachment_downloads(year=2021, tag="from:'Statements@cityindex.com' label:unread has:attachment")
+
+    SOURCE = "gs://praescire_statements/"
+    BUCKET = "praescire_statements"
+    OUTPUT_PREFIX = 'OCR_PDF_TEST_OUTPUT'
+
+    GCS_DESTINATION_URI = 'gs://{}/{}/'.format(BUCKET, OUTPUT_PREFIX)
+
+    # GCS_CRYPTO_URI = 'gs://{}/{}/'.format(BUCKET, CRYPTO_PREFIX)
+    # async_detect_document(SOURCE, GCS_DESTINATION_URI)
+
+    copy_local_directory_to_gcs(config.SETTINGS['local_statements'], BUCKET, 'pdf_statements/')
+
+    # delete the local files as they are now in the cloud
+    filelist = glob.glob(os.path.join(config.SETTINGS['local_statements'], "*.pdf"))
+    for f in filelist:
+        os.remove(f)
+
+    """
+    Here we are getting all the pdfs in the statements folder and then running ocr
+    """
+    storage_client = storage.Client()
+    buckets = list(storage_client.list_buckets())
+    print(buckets)
+
+    pdf_blobs_str = list_blobs(BUCKET, _prefix='pdf_statements/')
+
+    print(pdf_blobs_str)
+
+    for statement_path in pdf_blobs_str:
+        path_to_pdf = SOURCE + statement_path
+        print(path_to_pdf)
+
+        # cityIndex statements are all praescire statements
+        new_path = statement_path.replace("pdf_statements/", "praescire_statements/")
+        # copy the newl classified statement to the praescire_statement folder
+        copy_blob(BUCKET, statement_path, BUCKET, new_blob_name=new_path)
+        delete_blob(BUCKET, statement_path)
+
+    # moving the files from google cloud to dropbox
+    praescire_blob_str = list_blobs(BUCKET, _prefix='praescire_statements/')
+
+    if betaVersion:
+        statements_store = config.SETTINGS['statements_path'] + 'google_vision/'
+    else:
+        statements_store = config.SETTINGS['statements_path']
+
+    move_and_delete(BUCKET, praescire_blob_str, statements_store)
+    city_mov_monthly(statements_store)
+
 
 if __name__ == "__main__":
 
     start_time = time.time()
     main()
+    city_statements()
 
     print("time elapsed: {:.2f}s".format(time.time() - start_time))
