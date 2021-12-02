@@ -445,16 +445,15 @@ def main():
     mov_into_monthly(statements_store)
 
 def city_statements():
+    """
+    All city statements are for praescire so we just need to move them into the correct folder.
+    No OCR
+    """
     attachment_downloads(year=2021, tag="from:'Statements@cityindex.com' label:unread has:attachment")
 
     SOURCE = "gs://praescire_statements/"
     BUCKET = "praescire_statements"
     OUTPUT_PREFIX = 'OCR_PDF_TEST_OUTPUT'
-
-    GCS_DESTINATION_URI = 'gs://{}/{}/'.format(BUCKET, OUTPUT_PREFIX)
-
-    # GCS_CRYPTO_URI = 'gs://{}/{}/'.format(BUCKET, CRYPTO_PREFIX)
-    # async_detect_document(SOURCE, GCS_DESTINATION_URI)
 
     copy_local_directory_to_gcs(config.SETTINGS['local_statements'], BUCKET, 'pdf_statements/')
 
@@ -464,7 +463,7 @@ def city_statements():
         os.remove(f)
 
     """
-    Here we are getting all the pdfs in the statements folder and then running ocr
+    Here we are getting all the pdfs in the statements folder
     """
     storage_client = storage.Client()
     buckets = list(storage_client.list_buckets())
@@ -480,7 +479,7 @@ def city_statements():
 
         # cityIndex statements are all praescire statements
         new_path = statement_path.replace("pdf_statements/", "praescire_statements/")
-        # copy the newl classified statement to the praescire_statement folder
+        # copy to the praescire_statement folder
         copy_blob(BUCKET, statement_path, BUCKET, new_blob_name=new_path)
         delete_blob(BUCKET, statement_path)
 
