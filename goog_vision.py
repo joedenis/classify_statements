@@ -238,6 +238,7 @@ def mov_into_monthly(statements_path):
                     monthly_checker(month, statements_path, old_file_path)
                     break
 
+
 def city_mov_monthly(statements_path):
     """have filenames containing year month day time
     2021 11 30 220000
@@ -245,10 +246,9 @@ def city_mov_monthly(statements_path):
     """
     onlyfiles = [f for f in os.listdir(statements_path) if isfile(join(statements_path, f))]
     print(onlyfiles)
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-    months = { '01': 'Jan', '02': 'Feb', '03':'Mar', '04':'Apr', '05':'May',
-               '06':'Jun', '07':'Jul', '08':'Aug', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dec'}
+    months = {'01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05':'May',
+               '06': 'Jun', '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec'}
 
     for file in onlyfiles:
         # we only want to move cityIndex files.  They have more than 10 digits in the filename
@@ -313,7 +313,7 @@ def move(movdir=config.SETTINGS['local_tmp'], basedir=config.SETTINGS['local_sta
                     ii += 1
 
 
-def attachment_downloads(year=2021, tag="from:'no-reply.statements@ig.com' label:unread has:attachment"):
+def attachment_downloads(year, tag="from:'no-reply.statements@ig.com' label:unread has:attachment"):
     """
     downloads our gmail attachments into a local directory
     :return:
@@ -322,7 +322,7 @@ def attachment_downloads(year=2021, tag="from:'no-reply.statements@ig.com' label
     ezgmail.init()
     print(ezgmail.EMAIL_ADDRESS)
 
-    print("Searching for ig statement attachments in", str(year),"unread")
+    print("Searching for ig statement attachments in", str(year), "unread")
     search_term = str(year) + " " + tag
     email_threads = ezgmail.search(
         search_term,
@@ -373,7 +373,7 @@ def copy_local_directory_to_gcs(local_path, bucket_name, gcs_path):
         blob.upload_from_filename(local_file)
 
 
-def main():
+def main(year):
     """
     Downloads pdf attachments from gmail
     Moves all of the pdf statements stored in 'pdf_statements' into either crypto or praescire_statement folders
@@ -382,7 +382,7 @@ def main():
     Then moves all statements from Google Cloud into Dropbox so we can view the files locally
     """
 
-    attachment_downloads()
+    attachment_downloads(year)
 
     # SOURCE = "gs://praescire_statements/statement_crypto.pdf"
     SOURCE = "gs://praescire_statements/"
@@ -444,16 +444,18 @@ def main():
     # performing monthly folders in dropbox for the praescire_statements
     mov_into_monthly(statements_store)
 
-def city_statements():
+
+def city_statements(year):
     """
     All city statements are for praescire so we just need to move them into the correct folder.
     No OCR
+
+    year = 2021
     """
-    attachment_downloads(year=2021, tag="from:'Statements@cityindex.com' label:unread has:attachment")
+    attachment_downloads(year, tag="from:'Statements@cityindex.com' label:unread has:attachment")
 
     SOURCE = "gs://praescire_statements/"
     BUCKET = "praescire_statements"
-    OUTPUT_PREFIX = 'OCR_PDF_TEST_OUTPUT'
 
     copy_local_directory_to_gcs(config.SETTINGS['local_statements'], BUCKET, 'pdf_statements/')
 
@@ -498,7 +500,8 @@ def city_statements():
 if __name__ == "__main__":
 
     start_time = time.time()
-    main()
-    city_statements()
+    year = 2021
+    main(year)
+    city_statements(year)
 
     print("time elapsed: {:.2f}s".format(time.time() - start_time))
