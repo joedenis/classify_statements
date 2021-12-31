@@ -500,7 +500,7 @@ def city_statements(year):
 if __name__ == "__main__":
 
     start_time = time.time()
-    year = 2021
+    year = 2022
     main(year)
     city_statements(year)
 
