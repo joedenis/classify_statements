@@ -346,10 +346,11 @@ def attachment_downloads(year, tag="from:'no-reply.statements@ig.com' label:unre
             print("printing how the attachment reads", file)
 
             filename = file[0]
-
-            item.downloadAttachment(filename, config.SETTINGS['local_tmp'], duplicateIndex=0)
-            # MOVE ITEM INTO statements_folder
-            move()
+            
+            if not "segregation" in filename:
+                item.downloadAttachment(filename, config.SETTINGS['local_tmp'], duplicateIndex=0)
+                # MOVE ITEM INTO statements_folder
+                move()
 
         count += 1
 
